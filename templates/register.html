@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Register | SkillSwap{% endblock %}
+
+{% block extra_head %}
+<style>
+    .strength-meter-container {
+        margin-top: 0.5rem;
+    }
+    .strength-bar-bg {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 0.35rem;
+    }
+    .strength-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    .strength-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-muted);
+    }
+    .rules-list {
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0 0 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.3rem 0.5rem;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+    .rule-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: color 0.2s ease;
+    }
+    .rule-item.valid {
+        color: #059669;
+        font-weight: 600;
+    }
+    .rule-icon {
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card" style="max-width: 540px;">
+        <div class="auth-header">
+            <h2>Create Account</h2>
+            <p>Join SkillSwap and start exchanging skills with peers</p>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger">
+                <span>{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <form id="registerForm" method="POST" action="{{ url_for('register') }}">
+            <!-- Full Name -->
+            <div class="form-group">
+                <label for="name">Full Name <span class="asterisk">*</span></label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="e.g. John Doe" value="{{ request.form.get('name', '') }}" required autocomplete="name">
+                <div class="error-message" id="nameError">Name must be 2-60 alphabetic letters, spaces, or hyphens only</div>
+            </div>
+
+            <!-- Class -->
+            <div class="form-group">
+                <label for="class">Class / Academic Year <span class="asterisk">*</span></label>
+                <input type="text" id="class" name="class" class="form-control" placeholder="e.g. B.Tech 2nd Year, 12th Grade, MCA" value="{{ request.form.get('class', '') }}" required>
+                <div class="error-message" id="classError">Class must be between 2 and 50 characters</div>
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group">
+                <label>Gender <span class="asterisk">*</span></label>
+                <div class="gender-group">
+                    <label class="gender-option">
+                        <input type="radio" name="gender" value="Male" {% if request.form.get('gender') == 'Male' %}checked{% endif %}> Male
+                    </label>
+                    <label class="gender-option">
+                        <input type="radio" name="gender" value="Female" {% if request.form.get('gender') == 'Female' %}checked{% endif %}> Female
+                    </label>
+                    <label class="gender-option">
+                        <input type="radio" name="gender" value="Other" {% if request.form.get('gender') == 'Other' %}checked{% endif %}> Other
+                    </label>
+                </div>
+                <div class="error-message" id="genderError">Please select your gender</div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email">Email Address <span class="asterisk">*</span></label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="e.g. student@college.edu" value="{{ request.form.get('email', '') }}" required autocomplete="email">
+                <div class="error-message" id="emailError">Please enter a valid email address (e.g. user@domain.com)</div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="form-group">
+                <label for="phone">Phone Number <span class="asterisk">*</span></label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="10-digit mobile number" maxlength="10" value="{{ request.form.get('phone', '') }}" required autocomplete="tel">
+                <div class="error-message" id="phoneError">Enter a valid 10-digit mobile number</div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">Password <span class="asterisk">*</span></label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter a strong password" required autocomplete="new-password">
+                
+                <!-- Password Strength Visual Meter -->
+                <div class="strength-meter-container">
+                    <div class="strength-bar-bg">
+                        <div id="strengthBar" class="strength-bar-fill"></div>
+                    </div>
+                    <div class="strength-label">
+                        <span>Strength: <strong id="strengthText">None</strong></span>
+                        <span id="strengthPercent">0%</span>
+                    </div>
+
+                    <ul class="rules-list">
+                        <li id="rule-len" class="rule-item"><span class="rule-icon">○</span> 8+ characters</li>
+                        <li id="rule-upper" class="rule-item"><span class="rule-icon">○</span> Uppercase letter (A-Z)</li>
+                        <li id="rule-lower" class="rule-item"><span class="rule-icon">○</span> Lowercase letter (a-z)</li>
+                        <li id="rule-num" class="rule-item"><span class="rule-icon">○</span> Number (0-9)</li>
+                        <li id="rule-special" class="rule-item" style="grid-column: span 2;"><span class="rule-icon">○</span> Special character (!@#$%^&*...)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password <span class="asterisk">*</span></label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required autocomplete="new-password">
+                <div class="error-message" id="confirmError">Passwords do not match</div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-success" style="width: 100%; margin-top: 1rem; padding: 0.9rem;" disabled>
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const nameInput = document.getElementById('name');
+    const classInput = document.getElementById('class');
+    const genderRadios = document.querySelectorAll('input[name="gender"]');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const nameError = document.getElementById('nameError');
+    const classError = document.getElementById('classError');
+    const genderError = document.getElementById('genderError');
+    const emailError = document.getElementById('emailError');
+    const phoneError = document.getElementById('phoneError');
+    const confirmError = document.getElementById('confirmError');
+
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    const strengthPercent = document.getElementById('strengthPercent');
+
+    const ruleLen = document.getElementById('rule-len');
+    const ruleUpper = document.getElementById('rule-upper');
+    const ruleLower = document.getElementById('rule-lower');
+    const ruleNum = document.getElementById('rule-num');
+    const ruleSpecial = document.getElementById('rule-special');
+
+    function validateName() {
+        const val = nameInput.value.trim();
+        // 2 to 60 alphabetic characters, spaces, hyphens, and apostrophes
+        const valid = /^[A-Za-z\s'\-]{2,60}$/.test(val);
+        nameInput.classList.toggle('error', !valid && val.length > 0);
+        nameError.classList.toggle('show', !valid && val.length > 0);
+        return valid;
+    }
+
+    function validateClass() {
+        const val = classInput.value.trim();
+        const valid = /^[A-Za-z0-9\s.\-\/]{2,50}$/.test(val);
+        classInput.classList.toggle('error', !valid && val.length > 0);
+        classError.classList.toggle('show', !valid && val.length > 0);
+        return valid;
+    }
+
+    function validateGender() {
+        let valid = false;
+        genderRadios.forEach(r => { if (r.checked) valid = true; });
+        genderError.classList.toggle('show', !valid);
+        return valid;
+    }
+
+    function validateEmail() {
+        const val = emailInput.value.trim();
+        const regex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        const valid = regex.test(val) && val.length <= 100;
+        emailInput.classList.toggle('error', !valid && val.length > 0);
+        emailError.classList.toggle('show', !valid && val.length > 0);
+        return valid;
+    }
+
+    function validatePhone() {
+        const val = phoneInput.value.trim();
+        const validFormat = /^[0-9]{10}$/.test(val);
+        const nonTrivial = validFormat && new Set(val).size > 1;
+        const valid = validFormat && nonTrivial;
+        phoneInput.classList.toggle('error', !valid && val.length > 0);
+        phoneError.classList.toggle('show', !valid && val.length > 0);
+        return valid;
+    }
+
+    function updateRule(element, isValid) {
+        element.classList.toggle('valid', isValid);
+        const icon = element.querySelector('.rule-icon');
+        if (icon) {
+            icon.textContent = isValid ? '✓' : '○';
+        }
+    }
+
+    function validatePasswordStrength() {
+        const val = passwordInput.value;
+        const hasLen = val.length >= 8 && val.length <= 128;
+        const hasUpper = /[A-Z]/.test(val);
+        const hasLower = /[a-z]/.test(val);
+        const hasNum = /[0-9]/.test(val);
+        const hasSpecial = /[@$!%*?&#^()_\-+=\[\]{}|;:,.<>]/.test(val);
+
+        updateRule(ruleLen, hasLen);
+        updateRule(ruleUpper, hasUpper);
+        updateRule(ruleLower, hasLower);
+        updateRule(ruleNum, hasNum);
+        updateRule(ruleSpecial, hasSpecial);
+
+        let score = 0;
+        if (hasLen) score += 25;
+        if (val.length >= 12) score += 15;
+        if (hasUpper) score += 15;
+        if (hasLower) score += 15;
+        if (hasNum) score += 15;
+        if (hasSpecial) score += 15;
+        score = Math.min(100, score);
+
+        strengthBar.style.width = score + '%';
+        strengthPercent.textContent = score + '%';
+
+        if (score === 0) {
+            strengthBar.style.backgroundColor = '#e2e8f0';
+            strengthText.textContent = 'None';
+            strengthText.style.color = 'var(--text-muted)';
+        } else if (score < 40) {
+            strengthBar.style.backgroundColor = '#ef4444';
+            strengthText.textContent = 'Weak';
+            strengthText.style.color = '#ef4444';
+        } else if (score < 80) {
+            strengthBar.style.backgroundColor = '#f59e0b';
+            strengthText.textContent = 'Medium';
+            strengthText.style.color = '#f59e0b';
+        } else {
+            strengthBar.style.backgroundColor = '#10b981';
+            strengthText.textContent = 'Strong';
+            strengthText.style.color = '#10b981';
+        }
+
+        return hasLen && hasUpper && hasLower && hasNum && hasSpecial;
+    }
+
+    function validateConfirmPassword() {
+        const pw = passwordInput.value;
+        const cpw = confirmInput.value;
+        const match = pw.length > 0 && pw === cpw;
+        confirmInput.classList.toggle('error', !match && cpw.length > 0);
+        confirmError.classList.toggle('show', !match && cpw.length > 0);
+        return match;
+    }
+
+    function checkAll() {
+        const isNameOk = validateName();
+        const isClassOk = validateClass();
+        const isGenderOk = validateGender();
+        const isEmailOk = validateEmail();
+        const isPhoneOk = validatePhone();
+        const isPasswordStrong = validatePasswordStrength();
+        const isConfirmOk = validateConfirmPassword();
+
+        const allValid = isNameOk && isClassOk && isGenderOk && isEmailOk && isPhoneOk && isPasswordStrong && isConfirmOk;
+        submitBtn.disabled = !allValid;
+        submitBtn.style.opacity = allValid ? '1' : '0.6';
+        submitBtn.style.cursor = allValid ? 'pointer' : 'not-allowed';
+    }
+
+    nameInput.addEventListener('input', checkAll);
+    classInput.addEventListener('input', checkAll);
+    genderRadios.forEach(r => r.addEventListener('change', checkAll));
+    emailInput.addEventListener('input', checkAll);
+
+    phoneInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        checkAll();
+    });
+
+    passwordInput.addEventListener('input', () => {
+        validatePasswordStrength();
+        validateConfirmPassword();
+        checkAll();
+    });
+
+    confirmInput.addEventListener('input', () => {
+        validateConfirmPassword();
+        checkAll();
+    });
+
+    // Run initial check
+    checkAll();
+</script>
+{% endblock %}

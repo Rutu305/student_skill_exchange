@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | SkillSwap{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Header Banner -->
+    <div class="welcome-banner">
+        <div class="welcome-text">
+            <h1>Hello, {{ user.name }}! 👋</h1>
+            <p>Exchange knowledge, learn new skills from peers, and track your verified badges.</p>
+        </div>
+        <div class="user-stats-pill">
+            🎓 Class: <strong>{{ user.class_name }}</strong> &nbsp;|&nbsp; 
+            ⭐ Skill Rating: <strong>{{ user.skill_rating }}/5.0</strong>
+        </div>
+    </div>
+
+    <!-- 1. Manage Skills Card -->
+    <div class="app-card">
+        <h3 class="card-title">📚 Manage Your Skills</h3>
+        <form method="POST" action="{{ url_for('dashboard') }}" id="skillsForm">
+            <!-- Dropdown 1: Skills You Have -->
+            <div class="form-group">
+                <label>✓ Skills you have (can teach)</label>
+                <div class="custom-dropdown" id="haveDropdown">
+                    <div class="dropdown-header">
+                        <span id="haveSelectedText" class="placeholder">Select skills you know...</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="dropdown-options" id="haveOptions">
+                        <div class="dropdown-search-box">
+                            <input type="text" placeholder="Search skills..." oninput="filterDropdownOptions('haveOptions', this.value)">
+                        </div>
+                        {% for s in all_skills %}
+                            {% set is_verified = s in verified_skill_names %}
+                            <div class="dropdown-option {% if is_verified %}disabled{% endif %}" data-value="{{ s }}">
+                                <input type="checkbox" name="have_skills[]" value="{{ s }}" id="have_{{ loop.index }}"
+                                       {% if is_verified %}disabled checked{% endif %}>
+                                <label for="have_{{ loop.index }}">
+                                    {{ s }}{% if is_verified %} <span style="color: #059669; font-weight: 700;">✓ (Verified)</span>{% endif %}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="selected-tags-container" id="haveTagsContainer"></div>
+                <small style="color: var(--text-muted); display: block; margin-top: 0.4rem;">
+                    Select any skills you want to teach. Newly selected skills will require taking a quick 5-question verification test.
+                </small>
+            </div>
+
+            <!-- Dropdown 2: Skills You Want to Learn -->
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label>🎯 Skills you want to learn</label>
+                <div class="custom-dropdown" id="wantDropdown">
+                    <div class="dropdown-header">
+                        <span id="wantSelectedText" class="placeholder">Select skills to learn...</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="dropdown-options" id="wantOptions">
+                        <div class="dropdown-search-box">
+                            <input type="text" placeholder="Search skills..." oninput="filterDropdownOptions('wantOptions', this.value)">
+                        </div>
+                        {% for s in all_skills %}
+                            {% set is_wanted = s in wants_skill_names %}
+                            <div class="dropdown-option" data-value="{{ s }}">
+                                <input type="checkbox" name="want_skills[]" value="{{ s }}" id="want_{{ loop.index }}"
+                                       {% if is_wanted %}checked{% endif %}>
+                                <label for="want_{{ loop.index }}">{{ s }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="selected-tags-container" id="wantTagsContainer"></div>
+                <small style="color: var(--text-muted); display: block; margin-top: 0.4rem;">
+                    Select subjects you want other students to teach you.
+                </small>
+            </div>
+
+            <button type="submit" name="save_skills" value="1" class="btn btn-success" style="margin-top: 1rem;">
+                Save & Take Test for New Skills
+            </button>
+        </form>
+
+        <!-- Display Verified Skills -->
+        {% if user_skills %}
+            <div class="verified-skills-wrap">
+                <strong style="color: #1e293b; display: block; margin-bottom: 0.6rem;">✅ Your Verified Skills:</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
+                    {% for us in user_skills %}
+                        <span class="verified-badge">
+                            {{ us.skill_name }} (Rating: {{ us.rating }}/5)
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 2. Pending Requests Received -->
+    {% if pending_requests %}
+        <div class="app-card" style="border-color: #fde68a;">
+            <h3 class="card-title" style="border-color: #f59e0b;">📨 Connection Requests Received ({{ pending_requests | length }})</h3>
+            {% for req in pending_requests %}
+                <div class="request-card">
+                    <div>
+                        <strong style="font-size: 1.05rem; color: #78350f;">{{ req.name }}</strong>
+                        <div style="color: #92400e; font-size: 0.88rem; margin-top: 0.2rem;">
+                            Class: {{ req.class }} &nbsp;|&nbsp; Gender: {{ req.gender }}
+                        </div>
+                    </div>
+                    <a href="{{ url_for('accept_request', request_id=req.request_id) }}" class="btn btn-success">
+                        Accept Request
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- 3. Peer Matches (Mutual Skill Exchange) -->
+    <div class="app-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title" style="margin-bottom: 0;">🤝 Your Matches (Mutual Skill Exchange)</h3>
+            <form method="POST" action="{{ url_for('dashboard') }}" style="margin: 0;">
+                <button type="submit" name="refresh_matches" value="1" class="btn btn-outline" style="padding: 0.45rem 1.1rem; font-size: 0.9rem;">
+                    🔄 Refresh Matches
+                </button>
+            </form>
+        </div>
+
+        {% if not verified_skill_names or not wants_skill_names %}
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted); background: var(--surface-alt); border-radius: var(--radius-md);">
+                <p style="font-size: 1.05rem;">Please add at least one verified skill you can teach and one skill you want to learn to discover matches.</p>
+            </div>
+        {% elif not matches %}
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted); background: var(--surface-alt); border-radius: var(--radius-md);">
+                <p style="font-size: 1.05rem;">No direct mutual matches found yet. Try expanding your skills wanted or check back soon!</p>
+            </div>
+        {% else %}
+            <div class="matches-grid">
+                {% for match in matches %}
+                    <div class="match-card">
+                        <div>
+                            <div class="match-header">
+                                <div>
+                                    <div class="match-user-name">{{ match.name }}</div>
+                                    <div class="match-meta">{{ match.class }} &nbsp;|&nbsp; {{ match.gender }}</div>
+                                </div>
+                                <span class="affinity-badge">{{ match.match_score }}% Match 🔥</span>
+                            </div>
+
+                            <div class="match-skills-exchange" style="margin-top: 1rem;">
+                                <div class="exchange-row">
+                                    <span class="exchange-label">Can Teach You:</span>
+                                    {% for s in match.they_teach %}
+                                        <span class="mini-skill-pill" style="border-color: #86efac; color: #166534;">{{ s }}</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="exchange-row">
+                                    <span class="exchange-label">Wants From You:</span>
+                                    {% for s in match.you_teach %}
+                                        <span class="mini-skill-pill" style="border-color: #bfdbfe; color: #1e40af;">{{ s }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div style="margin-top: 0.5rem;">
+                            {% if match.connection_status == 'connected' %}
+                                <span class="btn-connected" style="width: 100%; justify-content: center;">✓ Connected</span>
+                            {% elif match.connection_status == 'sent_pending' %}
+                                <span class="btn-sent" style="width: 100%; justify-content: center;">Request Sent ✓</span>
+                            {% elif match.connection_status == 'received_pending' %}
+                                <a href="{{ url_for('accept_request', request_id=match.request_id) }}" class="btn btn-success" style="width: 100%;">
+                                    Accept Request
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('send_request', to_user_id=match.id) }}" class="btn btn-outline" style="width: 100%;">
+                                    Send Request
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 4. Accepted Connections (Contact Details Unlocked) -->
+    {% if accepted_connections %}
+        <div class="app-card" style="border-color: #bbf7d0;">
+            <h3 class="card-title" style="border-color: #10b981;">🔗 Your Connections (Contact Details Unlocked)</h3>
+            {% for conn in accepted_connections %}
+                <div class="connection-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+                        <div>
+                            <strong style="font-size: 1.1rem; color: #065f46;">{{ conn.name }}</strong>
+                            <div style="color: #047857; font-size: 0.88rem; margin-top: 0.2rem;">
+                                Class: {{ conn.class }} &nbsp;|&nbsp; Gender: {{ conn.gender }}
+                            </div>
+                        </div>
+                        <span class="btn-connected">Mutual Partner</span>
+                    </div>
+                    <div class="contact-info-block">
+                        <span>📧 <strong>Email:</strong> <a href="mailto:{{ conn.email }}" style="color: inherit;">{{ conn.email }}</a></span>
+                        <span>📞 <strong>Phone:</strong> <a href="tel:{{ conn.phone }}" style="color: inherit;">{{ conn.phone }}</a></span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function setupDropdown(dropdownId, optionsId, selectedTextId, tagsContainerId, isHaveSkills) {
+        const dropdown = document.getElementById(dropdownId);
+        const header = dropdown.querySelector('.dropdown-header');
+        const optionsBox = document.getElementById(optionsId);
+        const selectedText = document.getElementById(selectedTextId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+        const checkboxes = optionsBox.querySelectorAll('input[type="checkbox"]');
+
+        header.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown-options').forEach(el => {
+                if (el !== optionsBox) el.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown-header').forEach(el => {
+                if (el !== header) el.classList.remove('open');
+            });
+            optionsBox.classList.toggle('show');
+            header.classList.toggle('open');
+        });
+
+        optionsBox.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            let count = 0;
+
+            checkboxes.forEach(cb => {
+                // If it's haveSkills and disabled (meaning already verified), don't show as a pending removable tag
+                if (cb.checked) {
+                    count++;
+                    if (!cb.disabled) {
+                        const tag = document.createElement('span');
+                        tag.className = 'skill-tag-pill';
+                        tag.innerHTML = `${cb.value} <span class="remove-btn" data-val="${cb.value}">&times;</span>`;
+                        tagsContainer.appendChild(tag);
+                    }
+                }
+            });
+
+            if (count === 0) {
+                selectedText.textContent = isHaveSkills ? 'Select skills you know...' : 'Select skills to learn...';
+                selectedText.classList.add('placeholder');
+            } else {
+                selectedText.textContent = `${count} skill(s) selected`;
+                selectedText.classList.remove('placeholder');
+            }
+        }
+
+        // Remove tag click
+        tagsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-btn')) {
+                const val = e.target.getAttribute('data-val');
+                checkboxes.forEach(cb => {
+                    if (cb.value === val && !cb.disabled) {
+                        cb.checked = false;
+                    }
+                });
+                renderTags();
+            }
+        });
+
+        // Checkbox change
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', renderTags);
+        });
+
+        renderTags();
+    }
+
+    function filterDropdownOptions(optionsContainerId, query) {
+        const container = document.getElementById(optionsContainerId);
+        const options = container.querySelectorAll('.dropdown-option');
+        const q = query.toLowerCase().trim();
+
+        options.forEach(opt => {
+            const text = opt.getAttribute('data-value').toLowerCase();
+            opt.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-options').forEach(el => el.classList.remove('show'));
+        document.querySelectorAll('.dropdown-header').forEach(el => el.classList.remove('open'));
+    });
+
+    setupDropdown('haveDropdown', 'haveOptions', 'haveSelectedText', 'haveTagsContainer', true);
+    setupDropdown('wantDropdown', 'wantOptions', 'wantSelectedText', 'wantTagsContainer', false);
+</script>
+{% endblock %}

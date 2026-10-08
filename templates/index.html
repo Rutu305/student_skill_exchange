@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}SkillSwap | Learn from Peers, Teach What You Know{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-pill">
+            <span>✨</span> Next-Gen Peer Learning Platform
+        </div>
+        <h1>Learn from Peers,<br><span class="highlight">Teach What You Know</span></h1>
+        <p>Smart matching connects you with the perfect learning partner. Students teaching students — coding, design, languages, databases, and more.</p>
+        <div class="hero-cta">
+            {% if is_logged_in %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-hero-primary">Go to Dashboard →</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-hero-primary">Get Started Free</a>
+                <a href="#features" class="btn btn-hero-secondary">Explore Features</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features">
+    <div class="section-header">
+        <span class="section-tag">Empowering Students</span>
+        <h2 class="section-title">Why Choose SkillSwap</h2>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon-wrapper">🤖</div>
+            <h3>Smart Matching</h3>
+            <p>Intelligent mutual matching pairs you with the ideal study partner based on skills you teach and want to learn.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-wrapper">📊</div>
+            <h3>Skill Verification</h3>
+            <p>Take AI-assisted MCQ tests to verify your expertise and build instant credibility in the student community.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-wrapper">⭐</div>
+            <h3>Rating System</h3>
+            <p>Showcase verifiable rating scores (up to 5.0) that reflect your proven competence across various domains.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-wrapper">🔗</div>
+            <h3>Connect Safely</h3>
+            <p>Exchange contact info (email and phone) only after mutual acceptance of connection requests.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="how-it-works">
+    <div class="section-header">
+        <span class="section-tag">Step-by-Step</span>
+        <h2 class="section-title">How It Works</h2>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Create Account</h3>
+            <p>Sign up with your details, academic class, and phone number in under a minute.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Select Skills</h3>
+            <p>Tell us what you can teach and which subjects or skills you want to learn from peers.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Verify Knowledge</h3>
+            <p>Pass quick 5-question AI quizzes to verify your teachable skills and gain rating stars.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Match & Learn</h3>
+            <p>Send and accept connection requests to unlock contact info and start exchanging knowledge!</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

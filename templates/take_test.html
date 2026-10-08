@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Skill Test | {{ current_skill }} | SkillSwap{% endblock %}
+
+{% block content %}
+<div class="test-page">
+    <div class="test-container">
+        <!-- Test Header Card -->
+        <div class="test-header-card">
+            <h1>📝 Skill Verification Quiz</h1>
+            <div class="skill-test-badge">{{ current_skill }}</div>
+            <div class="test-progress-info">
+                Testing Skill {{ current_index + 1 }} of {{ total_skills }} &nbsp;•&nbsp; 5 Questions &nbsp;•&nbsp; Need 3/5 to Verify
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('take_test') }}" id="quizForm">
+            {% for q in questions %}
+                {% set q_idx = loop.index0 %}
+                <div class="question-card">
+                    <span class="question-number-badge">Question {{ loop.index }} of {{ questions | length }}</span>
+                    <div class="question-title">{{ q.question }}</div>
+                    
+                    <div class="options-group">
+                        {% for opt in q.options %}
+                            {% set opt_idx = loop.index0 %}
+                            <label class="option-label" id="label_{{ q_idx }}_{{ opt_idx }}">
+                                <input type="radio" name="q{{ q_idx }}" value="{{ opt_idx }}" required 
+                                       onchange="highlightOption({{ q_idx }}, {{ opt_idx }})">
+                                <span><strong>{{ ['A', 'B', 'C', 'D'][opt_idx] }}.</strong> {{ opt }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 1.1rem; font-size: 1.15rem; font-weight: 700; margin-top: 1rem;">
+                Submit Quiz for Scoring →
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="{{ url_for('dashboard') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.95rem;">
+                ← Cancel & Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function highlightOption(questionIdx, selectedOptIdx) {
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById(`label_${questionIdx}_${i}`);
+            if (el) {
+                if (i === selectedOptIdx) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

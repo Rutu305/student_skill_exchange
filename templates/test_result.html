@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Test Results | {{ skill }} | SkillSwap{% endblock %}
+
+{% block content %}
+<div class="test-page">
+    <div class="result-card">
+        <h1>📊 Test Results</h1>
+        <div class="skill-test-badge" style="margin-bottom: 1.5rem;">{{ skill }}</div>
+
+        <!-- Score Circle -->
+        <div class="score-circle {{ 'passed' if passed else 'failed' }}">
+            <div class="score-num">{{ score }}/{{ total }}</div>
+            <div class="score-sub">Correct Answers</div>
+        </div>
+
+        <!-- Rating Stars -->
+        <div class="rating-stars">
+            {% for i in range(1, 6) %}
+                <span class="{{ 'star-filled' if i <= rating else 'star-empty' }}">★</span>
+            {% endfor %}
+        </div>
+
+        <!-- Feedback Alert -->
+        {% if passed %}
+            <div class="result-alert passed">
+                🎉 <strong>Congratulations!</strong> You scored {{ score }}/{{ total }} (Rating: {{ rating }}/5).<br>
+                <strong>"{{ skill }}"</strong> has been verified and added to your profile!
+            </div>
+        {% else %}
+            <div class="result-alert failed">
+                ⚠️ <strong>Nice effort!</strong> You scored {{ score }}/{{ total }}.<br>
+                A score of 3/5 or higher is needed to verify this skill. You can retake this quiz anytime from the dashboard.
+            </div>
+        {% endif %}
+
+        <!-- Navigation Actions -->
+        <form method="POST" action="{{ url_for('test_result') }}" style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            {% if has_more_skills %}
+                <button type="submit" name="action" value="next" class="btn btn-primary" style="padding: 0.8rem 1.8rem; font-size: 1rem;">
+                    Next Skill Test →
+                </button>
+            {% endif %}
+            <button type="submit" name="action" value="dashboard" class="btn btn-outline" style="padding: 0.8rem 1.8rem; font-size: 1rem;">
+                ← Back to Dashboard
+            </button>
+        </form>
+
+        <!-- Question Breakdown Review -->
+        {% if results %}
+            <div class="test-review-block">
+                <h4 style="margin-bottom: 1rem; color: var(--text-main); font-weight: 700;">Question Breakdown:</h4>
+                {% for r in results %}
+                    <div class="test-review-item {{ 'correct' if r.is_correct else 'wrong' }}">
+                        <div style="font-weight: 600; margin-bottom: 0.4rem; color: #1e293b;">
+                            {{ loop.index }}. {{ r.question }}
+                        </div>
+                        <div style="font-size: 0.88rem; color: var(--text-muted);">
+                            <span>Your Answer: <strong>{{ r.options[r.user_answer] if (r.user_answer >= 0 and r.user_answer < r.options | length) else 'None' }}</strong></span>
+                            {% if not r.is_correct %}
+                                &nbsp;|&nbsp;
+                                <span style="color: #059669;">Correct Answer: <strong>{{ r.options[r.correct_answer] }}</strong></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

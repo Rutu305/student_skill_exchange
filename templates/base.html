@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SkillSwap | Student Skill Exchange Platform{% endblock %}</title>
+    <meta name="description" content="ML-powered peer-to-peer student skill exchange and learning platform. Verify skills with AI-powered quizzes and connect with study partners.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="logo">
+            SkillSwap <span class="badge-emoji">🤝</span>
+        </a>
+        <div class="nav-right">
+            {% if session.get('user_id') %}
+                <div class="user-badge">
+                    <span class="avatar-circle">{{ session.get('user_name', 'U')[0] | upper }}</span>
+                    <span>{{ session.get('user_name') }}</span>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-outline">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-success">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Flash Notifications -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+                        <span>{{ message }}</span>
+                        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Page Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 <strong>SkillSwap</strong> — Student Skill Exchange Platform | Learn. Teach. Grow together.</p>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
